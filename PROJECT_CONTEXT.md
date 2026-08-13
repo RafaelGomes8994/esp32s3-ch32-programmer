@@ -1,25 +1,18 @@
-# Project Goal
+# Project Context & Verification Status
 
-Develop a fully open-source programmer for the CH32V003 using an ESP32-S3.
+## Hardware Configuration
+- **Programmer**: ESP32-S3 (YD-ESP32-S3 N8R2)
+- **Target**: CH32V003A4M6 (SOP-16 Package)
+- **SWIO Connection**: ESP32-S3 GPIO10 $\rightarrow$ CH32 Pin 7 (`SWIO`)
 
-Hardware:
-
-ESP32-S3:
-- YD-ESP32-S3 N8R2
-
-Target:
-- CH32V003A4M6 SOP16
-
-Development:
-- Arduino IDE
-- Windows 11
-
-Goals:
-
-1. GPIO Timing
-2. Open Drain
-3. SWIO
-4. Read Chip ID
-5. Flash Erase
-6. Flash Program
-7. Flash Verify
+## Feature Verification Checklist
+- [x] GPIO Timing & Single-Wire SWIO Protocol Driver
+- [x] Open-Drain Line Drive & Bit Sampling
+- [x] Chip Detection (`0x0713BB91`) & `DMHARTINFO` (`0x002120F4`)
+- [x] Flash Unlock Sequence (`FLASH_KEYR`, `FLASH_OBKEYR`, `FLASH_MODEKEYR`)
+- [x] 64-Byte Fast Page Erase
+- [x] 64-Byte Fast Page Programming (`targetProgramBinary()`)
+- [x] Memory Readback Verification (`targetVerifyBinary()`)
+- [x] Target Reset/Run Execution (`targetResetRun()`)
+- [x] Host Python CLI Flashing Tool (`tools/flash_tool.py`)
+- [x] Modular Architecture & Complete Documentation
