@@ -19,3 +19,8 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+### Upstream Attribution & Acknowledgments
+Portions of the single-wire debug protocol implementation and DMI register architecture are derived from open-source research by Charles Lohr (CNLohr) in the ch32v003fun / minichlink project (MIT / BSD / Public Domain), and technical specifications published by Nanjing Qinheng Microelectronics (WCH).

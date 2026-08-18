@@ -21,7 +21,7 @@ CH32V003_FLASH_SIZE = 16 * 1024  # 16 KB
 def main():
     parser = argparse.ArgumentParser(description="ESP32-S3 CH32V003 Binary Flasher Tool")
     parser.add_argument("--port", default="COM10", help="Serial port (default: COM10)")
-    parser.add_argument("--bin", required=True, help="Path to target binary file (.bin)")
+    parser.add_argument("--bin", default=os.path.join("firmware", "ch32_blink", "blink.bin"), help="Path to target binary file (.bin) (default: firmware/ch32_blink/blink.bin)")
     parser.add_argument("--addr", default="0x08000000", help="Target flash memory address (default: 0x08000000)")
     parser.add_argument("--reset", action="store_true", help="Execute target reset/run after flashing and verification")
     args = parser.parse_args()

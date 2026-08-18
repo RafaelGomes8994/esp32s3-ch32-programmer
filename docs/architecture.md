@@ -1,41 +1,50 @@
-# ESP32-S3 CH32 Programmer Architecture
+# ESP32-S3 CH32V003 Programmer Architecture
 
 This document details the modular software architecture of the open-source ESP32-S3 CH32V003 programmer.
 
 ---
 
-## Modular Subsystem Breakdown
+## 1. Modular Subsystem Breakdown
 
 The repository is structured into 6 decoupled modules:
 
 ```
 esp32s3-ch32-programmer/
-├── docs/                               # 6. Comprehensive Documentation
+├── docs/                               # Module 6: Documentation
 │   ├── architecture.md
-│   ├── hardware_setup.md
-│   └── cli_protocol.md
+│   ├── hardware.md
+│   ├── flashing.md
+│   ├── protocol.md
+│   └── development.md
 ├── firmware/
-│   ├── ch32_blink/                     # 4. CH32 Target Firmware Application
+│   ├── ch32_blink/                     # Module 4: CH32 Target Firmware Application
 │   │   ├── ch32v003.ld
 │   │   ├── main.c
 │   │   ├── startup.s
 │   │   ├── Makefile
 │   │   └── blink.bin
-│   └── environment_test/               # ESP32-S3 Firmware
+│   └── programmer/                     # ESP32-S3 Programmer Firmware (PlatformIO)
 │       ├── platformio.ini
-│       ├── environment_test.ino        # 3. Interactive Serial CLI
-│       ├── swio.h                      # 1. Programmer Core (SWIO driver)
-│       ├── swio.cpp
-│       ├── dmi.h                       # 1. Programmer Core (DMI protocol)
-│       ├── dmi.cpp
-│       ├── target.h                    # 2. Target / Flash Engine
-│       └── target.cpp
-├── tools/                              # 5. Host Command Line Tools
+│       ├── programmer.ino              # Module 3: Serial Test CLI
+│       ├── swio.h / swio.cpp           # Module 1: Programmer Core (SWIO driver)
+│       ├── dmi.h / dmi.cpp             # Module 1: Programmer Core (DMI protocol)
+│       └── target.h / target.cpp       # Module 2: Target / Flash Engine
+├── hardware/
+│   └── wiring/
+│       └── README.md                   # Visual wiring and schematic reference
+├── tests/
+│   └── README.md                       # Verification & regression test suite notes
+├── tools/                              # Module 5: Host Python CLI Tool
 │   └── flash_tool.py
-└── README.md                           # Master Project Readme
+├── LICENSE                             # Open Source License & Attributions
+├── CHANGELOG.md                        # Version Release History
+├── PROJECT_CONTEXT.md                  # Project Context & Hardware Specs
+└── README.md                           # Master Project Documentation
 ```
 
 ---
+
+## 2. Module Responsibilities
 
 ### Module 1: Programmer Core (`swio.*` & `dmi.*`)
 * **Single-Wire I/O (`swio`)**: High-speed bit-banging protocol driver running on Xtensa LX7 (ESP32-S3) using precise cycle delays (`upstreamPrecDelay(10)` measured at ~48 CPU cycles). Manages open-drain drive high, drive low, line release, and 1-wire bit sampling.
@@ -43,7 +52,7 @@ esp32s3-ch32-programmer/
 
 ---
 
-### Module 2: Target / Flash Implementation (`target.*`)
+### Module 2: Target / Flash Engine (`target.*`)
 * **Chip Detection**: Reads `DMHARTINFO` (`0x002120F4`) and device identification memory at `0x1FFFF704` (`0x0713BB91`).
 * **Flash Unlock**: Sends 3-stage unlock key sequences (`FLASH_KEYR`, `FLASH_OBKEYR`, `FLASH_MODEKEYR`) using keys `0x45670123` and `0xCDEF89AB`.
 * **Fast Page Erase**: Performs targeted 64-byte page erases (`FLASH_CTLR_PAGE_ER`).
@@ -52,7 +61,7 @@ esp32s3-ch32-programmer/
 
 ---
 
-### Module 3: Serial Test CLI (`environment_test.ino`)
+### Module 3: Serial Test CLI (`programmer.ino`)
 * Interactive line-buffered command parser running over ESP32-S3 USB Serial (115200 baud).
 * Supports commands: `detect`, `unlock`, `erase confirm`, `testprogram confirm`, `flash <addr> <hex>`, `verify <addr> <hex>`, `reset`.
 
