@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "dmi.h"
+#include "swio.h"
 
 TargetResult targetWriteWord(uint32_t address, uint32_t value);
 
@@ -114,6 +115,13 @@ bool flashAddressValid(uint32_t address, uint32_t length) {
 
 TargetResult targetDetect(TargetInfo& info) {
   info = {};
+  swioSynchronize();
+  uint32_t configValue = 0;
+  if (dmiSynchronize(configValue) != DmiResult::Ok) {
+    g_detected = false;
+    g_flashUnlocked = false;
+    return TargetResult::DmiFailure;
+  }
   uint32_t chipId = 0;
   uint32_t hartInfo = 0;
   const DmiResult dmiResult = dmiReadCh32V003Id(chipId, hartInfo);
@@ -408,6 +416,8 @@ TargetResult targetProgramBinary(uint32_t address, const uint8_t* data, size_t l
     const size_t bytesToCopy = (64U - offsetInPage) < (length - bytesWritten) ? (64U - offsetInPage) : (length - bytesWritten);
 
     // 1. Erase only the specific 64-byte page touched by this chunk
+    result = targetUnlockFlash();
+    if (result != TargetResult::Ok) return result;
     result = targetErasePage(pageAddr);
     if (result != TargetResult::Ok) return result;
 

@@ -209,9 +209,10 @@ The hardware baseline for this repository was verified using:
 
 | Path | Purpose |
 | :--- | :--- |
-| [`firmware/programmer/`](firmware/programmer/) | ESP32-S3 PlatformIO programmer firmware (SWIO, DMI, Flash engine, Serial CLI) |
+| [`firmware/programmer/`](firmware/programmer/) | ESP32-S3 PlatformIO programmer firmware (SWIO auto-calibration, DMI, Flash engine, Serial CLI, `i2cscan`/`diag`) |
 | [`firmware/ch32_blink/`](firmware/ch32_blink/) | Bare-metal CH32V003 C application, RISC-V startup assembly, linker script, Makefile |
-| [`tools/`](tools/) | Host Python flashing utility ([`flash_tool.py`](tools/flash_tool.py)) |
+| [`firmware/ch32_i2c_coprocessor/`](firmware/ch32_i2c_coprocessor/) | Bare-metal CH32V003 I2C Slave (`0x30`) to Software I2C Master (`0x24` PN532 NFC) coprocessor bridge |
+| [`tools/`](tools/) | Host Python flashing utility with auto-port detection & chunked retries ([`flash_tool.py`](tools/flash_tool.py)) |
 | [`docs/`](docs/) | Technical documentation suite ([`architecture.md`](docs/architecture.md), [`hardware.md`](docs/hardware.md), [`flashing.md`](docs/flashing.md), [`protocol.md`](docs/protocol.md), [`development.md`](docs/development.md)) |
 | [`hardware/`](hardware/) | Hardware schematics and wiring references ([`hardware/wiring/README.md`](hardware/wiring/README.md)) |
 | [`tests/`](tests/) | Hardware verification and regression test procedures ([`tests/README.md`](tests/README.md)) |
@@ -245,7 +246,8 @@ This project builds upon open-source research and community documentation:
 
 - [ ] Measure and benchmark sustained programming throughput across varying buffer chunk sizes.
 - [ ] Validate broader CH32V00x package variants (CH32V003F4P6, CH32V003J4M6).
-- [ ] Enhance host CLI tooling with automatic serial port detection and progress indicators.
+- [x] Enhance host CLI tooling with automatic serial port detection and chunked SWIO recovery retries.
+- [x] Add dynamic SWIO `t1coeff` auto-calibration sweep and 20 ms reset pulse fallback.
 - [ ] Add option byte (OB) read/write configuration CLI commands.
 - [ ] Explore WebUSB / WebSerial browser-based flashing interface.
 - [ ] Implement basic target register inspection and memory dump commands.

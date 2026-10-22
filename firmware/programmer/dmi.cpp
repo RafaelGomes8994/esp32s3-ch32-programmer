@@ -96,7 +96,9 @@ DmiResult dmiReadReg32(uint8_t address, uint32_t& value) {
   return result;
 }
 
-DmiResult dmiSynchronize(uint32_t& configValue) {
+namespace {
+
+DmiResult tryDmiHandshake(uint32_t& configValue) {
   constexpr uint32_t kEnableSlaveOutput = 0x5AA50000UL | (1UL << 10);
   dmiWriteReg32(DMI_SHADOW_CONFIG, kEnableSlaveOutput);
   dmiWriteReg32(DMI_CONFIG, kEnableSlaveOutput);
@@ -113,6 +115,38 @@ DmiResult dmiSynchronize(uint32_t& configValue) {
           !invalidFloatingValue(configValue))
              ? DmiResult::Ok
              : DmiResult::InvalidResponse;
+}
+
+}  // namespace
+
+DmiResult dmiSynchronize(uint32_t& configValue) {
+  // 1. Try default upstream t1coeff=10 first from driven-high state.
+  swioSetT1Coeff(10);
+  DmiResult result = tryDmiHandshake(configValue);
+  if (result == DmiResult::Ok) {
+    return DmiResult::Ok;
+  }
+
+  // 2. Sweep candidate t1coeff values (covers CH32V003 clock dividers & HSI drift),
+  //    trying both driven-high sync and a 20 ms SWIO-low reset pulse.
+  static constexpr int kCoeffs[] = {10, 8, 12, 9, 11, 7, 14, 6, 16, 20, 5, 24};
+  for (int coeff : kCoeffs) {
+    swioSetT1Coeff(coeff);
+    swioSynchronize();
+    result = tryDmiHandshake(configValue);
+    if (result == DmiResult::Ok) {
+      return DmiResult::Ok;
+    }
+
+    swioResetPulse();
+    result = tryDmiHandshake(configValue);
+    if (result == DmiResult::Ok) {
+      return DmiResult::Ok;
+    }
+  }
+
+  swioSetT1Coeff(10);
+  return result;
 }
 
 DmiResult dmiReadCh32V003Id(uint32_t& chipId, uint32_t& hartInfo) {

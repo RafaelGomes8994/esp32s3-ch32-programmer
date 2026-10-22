@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Wire.h>
 
 #include "dmi.h"
 #include "swio.h"
@@ -190,11 +191,46 @@ void runCommand(char* line) {
     }
   } else if (strcmp(command, "reset") == 0) {
     const TargetResult result = targetResetRun();
+    uint32_t dmstatus = 0;
+    dmiReadReg32(DMI_DMSTATUS, dmstatus);
     if (result == TargetResult::Ok) {
-      Serial.println("Reset/run: OK");
+      Serial.printf("Reset/run: OK (DMSTATUS=0x%08lX)\n", (unsigned long)dmstatus);
     } else {
       printTargetFailure("Reset/run", result);
     }
+  } else if (strcmp(command, "i2cscan") == 0) {
+    Wire.begin(8, 9, 100000);
+    Serial.println("--- I2C Scan on SDA=GPIO8, SCL=GPIO9 ---");
+    int found = 0;
+    for (uint8_t a = 1; a < 127; ++a) {
+      Wire.beginTransmission(a);
+      uint8_t err = Wire.endTransmission();
+      if (err == 0) {
+        Serial.printf("  FOUND: 0x%02X\n", a);
+        found++;
+      }
+    }
+    if (found == 0) Serial.println("  No I2C devices found.");
+    uint8_t n = Wire.requestFrom(0x30, 8);
+    if (n > 0) {
+      Serial.printf("  Read from 0x30 (%u bytes):", n);
+      while (Wire.available()) Serial.printf(" %02X", Wire.read());
+      Serial.println();
+    }
+  } else if (strcmp(command, "diag") == 0) {
+    uint32_t magic = 0, hits = 0, pn = 0, polls = 0, ctlr1 = 0, star1 = 0, cfglr = 0;
+    targetReadWord(0x20000000UL, magic);
+    targetReadWord(0x20000004UL, hits);
+    targetReadWord(0x20000008UL, pn);
+    targetReadWord(0x2000000CUL, polls);
+    targetReadWord(0x40005400UL, ctlr1);
+    targetReadWord(0x40005414UL, star1);
+    targetReadWord(0x40011000UL, cfglr);
+    dmiWriteReg32(DMI_DMCONTROL, 0x00000001UL);
+    dmiWriteReg32(DMI_DMCONTROL, 0x40000001UL);
+    Serial.printf("DIAG: magic=0x%08lX hits=%lu pn532=%lu polls=%lu | CTLR1=0x%04lX STAR1=0x%04lX GPIOC_CFGLR=0x%08lX\n",
+                  (unsigned long)magic, (unsigned long)hits, (unsigned long)pn, (unsigned long)polls,
+                  (unsigned long)(ctlr1 & 0xFFFF), (unsigned long)(star1 & 0xFFFF), (unsigned long)cfglr);
   } else {
     Serial.println("Commands: detect | unlock | erase confirm | testprogram confirm | flash <addr> <hex> | verify <addr> <hex> | reset");
   }

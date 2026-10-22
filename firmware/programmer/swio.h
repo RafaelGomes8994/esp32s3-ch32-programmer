@@ -15,6 +15,9 @@ bool swioInit();
 
 // CNLohr ESP32-S2 startup state: actively drive SWIO high for 5 ms.
 void swioSynchronize();
+void swioResetPulse();
+void swioSetT1Coeff(int coeff);
+int swioGetT1Coeff();
 
 // A non-critical diagnostic measurement of the exact upstream delay loop.
 uint32_t swioMeasureUpstreamT1Cycles();

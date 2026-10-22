@@ -57,3 +57,4 @@ scratch/
 
 # Unignore intentional project firmware binaries
 !firmware/ch32_blink/blink.bin
+!firmware/ch32_i2c_coprocessor/i2c_coproc.bin
