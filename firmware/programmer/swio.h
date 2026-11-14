@@ -2,8 +2,16 @@
 
 #include <Arduino.h>
 
-// GPIO10 is connected to CH32V003 SWIO.  A physical 3.3 V pull-up is required.
-constexpr uint8_t SWIO_PIN = 10;
+// Default SWIO pin is GPIO10 (override via -DSWIO_PIN=21 in platformio.ini).
+// A physical 4.7k-10k ohm pull-up between CH32V003 PD1 (SWIO) and 3.3V is required.
+#ifndef SWIO_PIN
+#define SWIO_PIN 10
+#endif
+
+// ESP32-S3 native USB CDC (D-/D+) occupies GPIO19 and GPIO20.
+#if defined(ARDUINO_USB_CDC_ON_BOOT) && ARDUINO_USB_CDC_ON_BOOT && ((SWIO_PIN == 19) || (SWIO_PIN == 20))
+#error "GPIO19/GPIO20 are reserved for ESP32-S3 native USB CDC (D-/D+). Choose GPIO10 or GPIO21."
+#endif
 
 enum class SwioBitResult : uint8_t {
   Zero,

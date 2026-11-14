@@ -8,9 +8,12 @@ This document provides complete hardware pinouts, power rail architecture, and s
 
 | Pin Name | Function | Connection Target | Electrical Characteristic |
 | :--- | :--- | :--- | :--- |
-| **GPIO10** | SWIO Data Line | CH32V003 Pin 7 (`PD1`) | Open-drain I/O, requires $4.7\text{k}\Omega - 10\text{k}\Omega$ pull-up to 3.3V |
+| **GPIO10** *(or GPIO21 via `-DSWIO_PIN=21`)* | SWIO Data Line | CH32V003 Pin 7 (`PD1`) | Open-drain I/O (`IO_MUX` input enabled), requires $4.7\text{k}\Omega - 10\text{k}\Omega$ pull-up to 3.3V |
 | **3V3** | 3.3V DC Out | CH32V003 Pin 15 (`VDD`) | Target core logic supply ($I_{max} \approx 500\text{ mA}$) |
 | **GND** | Digital Ground | CH32V003 Pin 14 (`VSS`) | System common ground |
+
+> [!WARNING]
+> **Avoid ESP32-S3 GPIO19 and GPIO20 for SWIO**: When native USB CDC is enabled (`-DARDUINO_USB_CDC_ON_BOOT=1`, `-DARDUINO_USB_MODE=1`), GPIO19 (`USB D-`) and GPIO20 (`USB D+`) carry the host USB Serial connection. Mapping SWIO to GPIO19/20 will drop the serial link. Use **GPIO10** (default) or **GPIO21** (`-DSWIO_PIN=21`).
 
 ---
 
@@ -42,7 +45,7 @@ The **CH32V003A4M6** is an ultra-low-cost 32-bit RISC-V microcontroller in a sta
 
 ## 3. SWIO Pull-Up Configuration
 
-The single-wire debug protocol relies on an open-drain bidir signaling standard. An external **$4.7\text{k}\Omega$ to $10\text{k}\Omega$ pull-up resistor** tied between `SWIO` (CH32 Pin 7) and `3.3V` (CH32 Pin 15) is required to guarantee fast rise times and noise immunity on the data line.
+The single-wire debug protocol relies on an open-drain bidirectional signaling standard. Wire an external **$4.7\text{k}\Omega$ to $10\text{k}\Omega$ pull-up resistor between `PD1` (CH32 Pin 7) and `3.3V` (CH32 Pin 15)** — **do NOT place the resistor in series** on the SWIO data line. Both boards must also share common `3.3V` and `GND` reference rails so edge thresholds stay deterministic.
 
 ---
 
@@ -83,3 +86,13 @@ The **CP6208** is a monolithic bidirectional H-bridge motor driver IC capable of
 
 1. **Common Ground**: All grounds (ESP32-S3 `GND`, CH32V003 `VSS`, CP6208 `GND`, and Motor Power Supply negative terminal) **MUST** be connected together.
 2. **Independent Motor Supply**: Motor power ($V_{CC}$) must always come from a dedicated external power supply to prevent inductive voltage spikes from interfering with or resetting the microcontrollers.
+
+---
+
+## 6. Troubleshooting & Shared-Bus Isolation
+
+1. **Serial Port Drops Immediately at Boot (`GPIO19` / `GPIO20`)**: Verify `SWIO_PIN` does not collide with native USB CDC pins (`GPIO19`/`GPIO20`). Use `GPIO10` or pass `-DSWIO_PIN=21` in `platformio.ini`.
+2. **SWIO Sync Succeeds, but Chip ID (`0x1FFFF704`) or `progbuf` Unlock Fails**:
+   * Disconnect all shared-bus peripherals and any secondary CH32V003 devices sharing power or I/O rails with the target.
+   * Keep only the ESP32-S3 programmer, the single target CH32V003, and the `PD1` $\leftrightarrow$ `3.3V` pull-up connected, then re-run `detect`.
+3. **Reads Return `0x00000000` or `0xFFFFFFFF`**: Confirm the pull-up resistor is wired in parallel (`PD1` to `3.3V`) rather than in series on the SWIO wire, and verify `esp_cpu_get_cycle_count` / `IO_MUX` input buffer initialization under ESP-IDF 5.x (`espressif32 @ 6.13.0`).

@@ -3,7 +3,7 @@
 An open-source **ESP32-S3 based CH32V003 SWIO programmer/debugger with verified flash programming**.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Release](https://img.shields.io/badge/Release-v0.1.0-blue.svg)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/Release-v0.2.0-blue.svg)](CHANGELOG.md)
 [![Hardware Verified](https://img.shields.io/badge/Hardware%20Verified-CH32V003A4M6-brightgreen.svg)](tests/README.md)
 [![PlatformIO](https://img.shields.io/badge/PlatformIO-ESP32--S3-orange.svg)](firmware/programmer/platformio.ini)
 
@@ -15,7 +15,7 @@ An open-source **ESP32-S3 based CH32V003 SWIO programmer/debugger with verified 
 ### Quick Value Proposition
 * **Programmer MCU**: ESP32-S3 (240 MHz Xtensa LX7 dual-core).
 * **Target MCU**: WCH CH32V003 (QingKe 32-bit RISC-V V2A core).
-* **Interface**: 1-wire open-drain SWIO via ESP32-S3 **GPIO10** (requires external $4.7\text{k}\Omega - 10\text{k}\Omega$ pull-up).
+* **Interface**: 1-wire open-drain SWIO via ESP32-S3 **GPIO10** (or **GPIO21** via `-DSWIO_PIN=21`; avoids USB-CDC `GPIO19`/`20`, requires external $4.7\text{k}\Omega - 10\text{k}\Omega$ `PD1` $\leftrightarrow$ `3.3V` pull-up).
 * **Flashing Pipeline**: 3-stage flash unlock $\rightarrow$ 64-byte fast page erase $\rightarrow$ 64-byte page buffer write $\rightarrow$ byte-for-byte readback verification $\rightarrow$ explicit CPU reset/run.
 * **Host Interface**: Standalone Python CLI utility ([`tools/flash_tool.py`](tools/flash_tool.py)) communicating over USB-UART (115200 baud).
 
@@ -209,7 +209,7 @@ The hardware baseline for this repository was verified using:
 
 | Path | Purpose |
 | :--- | :--- |
-| [`firmware/programmer/`](firmware/programmer/) | ESP32-S3 PlatformIO programmer firmware (SWIO auto-calibration, DMI, Flash engine, Serial CLI, `i2cscan`/`diag`) |
+| [`firmware/programmer/`](firmware/programmer/) | ESP32-S3 PlatformIO programmer firmware (ESP-IDF 5.x `espressif32 @ 6.13.0`, SWIO auto-calibration, DMI, Flash engine, Serial CLI) |
 | [`firmware/ch32_blink/`](firmware/ch32_blink/) | Bare-metal CH32V003 C application, RISC-V startup assembly, linker script, Makefile |
 | [`firmware/ch32_i2c_coprocessor/`](firmware/ch32_i2c_coprocessor/) | Bare-metal CH32V003 I2C Slave (`0x30`) to Software I2C Master (`0x24` PN532 NFC) coprocessor bridge |
 | [`tools/`](tools/) | Host Python flashing utility with auto-port detection & chunked retries ([`flash_tool.py`](tools/flash_tool.py)) |
